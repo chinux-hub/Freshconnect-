@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshConnect | Farm-to-Table Marketplace</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body class="fresh-theme">
+
+    <header>
+        <nav class="navbar" id="nav-header">
+            <div class="logo-container" onclick="showPage('hero-section')" style="cursor:pointer">
+                <div class="logo-heart-wrap">
+                    <span class="tractor-emoji">🚜</span>
+                </div>
+                <div class="logo-text">Fresh<span>Connect</span></div>
+            </div>
+
+            <ul class="nav-links" id="main-nav" style="display: none;">
+                <li><a href="#" onclick="showPage('marketplace')">🛍️ Marketplace</a></li>
+                <li><a href="#" onclick="showPage('chat-window')">💬 Chat</a></li>
+                <li><a href="#" onclick="showPage('settings-page')">⚙️ Settings</a></li>
+                <li><button class="btn-farmer-nav" onclick="showPage('farm-reg-section')">Join Farmer</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="hero" id="hero-section">
+        <div class="container">
+            <div class="welcome-text">
+                <h1>Farm-Fresh to Your Doorstep</h1>
+                <p>Connecting local farmers directly with consumers and marketers.</p>
+            </div>
+
+            <div class="login-container">
+                <div class="login-card customer-theme" id="auth-card">
+                    <div id="login-form">
+                        <h3 id="login-title">Customer Login</h3>
+                        <form id="main-login-form">
+                            <input type="email" id="login-email" placeholder="Email Address" required>
+                            <div class="password-wrapper">
+                                <input type="password" id="login-pass" placeholder="Password" required>
+                                <span class="password-toggle" onclick="togglePasswordVisibility('login-pass')">👁️</span>
+                            </div>
+                            <button type="submit" class="btn-login">Log In</button>
+                        </form>
+                        <div class="auth-options">
+                            <a href="#" onclick="showForgotPassword()">Forgot Password?</a>
+                            <p>New here? <a href="#" onclick="toggleAuth()" class="bold-green">Create account</a></p>
+                        </div>
+                    </div>
+
+                    <div id="signup-form" style="display: none;">
+                        <h3>Create Account</h3>
+                        <form id="customer-register-form">
+                            <input type="text" placeholder="Full Name" required>
+                            <input type="email" id="signup-email" placeholder="Email" required>
+                            <div class="password-wrapper">
+                                <input type="password" id="signup-pass" placeholder="Password" required>
+                                <span class="password-toggle" onclick="togglePasswordVisibility('signup-pass')">👁️</span>
+                            </div>
+                            <button type="submit" class="btn-login">Register</button>
+                        </form>
+                        <p>Already have an account? <a href="#" onclick="toggleAuth()">Log In</a></p>
+                    </div>
+                    
+                    <div class="divider">or</div>
+                    <button class="btn-google" id="google-signin">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" width="18">
+                        Continue with Google
+                    </button>
+                </div>
+
+                <div class="login-card farmer-theme" id="farmer-prompt">
+                    <div class="farmer-graphic">🚜</div>
+                    <h3>Farmer Portal</h3>
+                    <p>Manage harvests and reach more customers.</p>
+                    <button class="btn-farmer-login" onclick="switchToFarmerLogin()">Farmer Login</button>
+                    <button class="btn-register-farm" onclick="showPage('farm-reg-section')">Register New Farm</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <section id="marketplace" class="container" style="display:none; padding: 40px 20px;">
+        <div class="dashboard-header">
+            <h2 class="purple-green-text">Marketplace</h2>
+            <div class="search-bar-wrap">
+                <input type="text" placeholder="Search fresh produce...">
+            </div>
+        </div>
+        <div class="product-grid" id="product-list">
+            </div>
+    </section>
+
+    <section id="chat-window" class="container" style="display:none; padding: 40px 20px;">
+        <div class="chat-container premium-shadow">
+            <div class="chat-header-dashboard">
+                <div class="active-user-info">
+                    <div class="status-dot"></div>
+                    <span>Direct Farm Chat</span>
+                </div>
+            </div>
+            <div class="message-display" id="msg-display"></div>
+            <div class="chat-input-area">
+                <input type="text" id="user-msg" placeholder="Type a message...">
+                <button id="send-trigger" class="btn-purple-send">➤</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="settings-page" class="container" style="display:none; padding: 40px 20px;">
+        <div class="login-card premium-card" style="margin: 0 auto; max-width: 500px;">
+            <h3>Dashboard Settings</h3>
+            <div class="settings-group">
+                <h4>Role: <span id="current-role" class="role-badge">Customer</span></h4>
+                <button class="btn-switch-role" onclick="switchUserRole()">Switch to Farmer Mode</button>
+            </div>
+            <div class="settings-group">
+                <div class="toggle-wrap">
+                    <span>Dark Theme</span>
+                    <button id="theme-toggle" class="btn-toggle">Off</button>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="logoutUser()" style="background:#e74c3c; color:white; border:none; padding:12px; width:100%; border-radius:10px; cursor:pointer; margin-top:20px;">Sign Out</button>
+        </div>
+    </section>
+
+    <section id="farm-reg-section" class="container" style="display:none; padding: 40px 20px;">
+        <h2 style="text-align: center; color: #2d6a4f;">Register Your Farm</h2>
+        <form id="farmForm" class="login-card" style="margin: 0 auto; max-width: 400px;">
+            <input type="text" placeholder="Farm Name" required>
+            <input type="text" placeholder="Location" required>
+            <button type="submit" class="btn-login">Submit Registration</button>
+            <button type="button" onclick="showPage('marketplace')" style="background:none; border:none; color:gray; margin-top:15px; width:100%; cursor:pointer;">Cancel</button>
+        </form>
+    </section>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>

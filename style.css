@@ -1,0 +1,172 @@
+/* 1. BRAND COLORS & GRADIENTS */
+:root {
+    --brand-gradient: linear-gradient(90deg, #6a1b9a 0%, #2d6a4f 100%);
+    --purple-deep: #4a148c;
+    --purple-accent: #7b1fa2;
+    --text-dark: #1b4332;
+    --white: #ffffff;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 2. LOGO GRAPHIC (Heart-Tractor Design) */
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 1100;
+}
+
+.logo-heart-wrap {
+    width: 45px;
+    height: 45px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    border: 2px solid #e1bee7;
+    font-size: 1.4rem;
+}
+
+.logo-text {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-dark); 
+    transition: var(--transition);
+}
+
+.logo-text span { font-weight: 300; }
+
+/* 3. DYNAMIC DASHBOARD NAV */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 5%;
+    background: var(--white);
+    transition: var(--transition);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+/* Post-Login Dashboard Style (Triggered by Script) */
+.navbar.dashboard-active {
+    background: var(--brand-gradient) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.navbar.dashboard-active .logo-text {
+    color: white !important;
+}
+
+/* Added specific rule for Nav Links so they turn white on Dashboard */
+.navbar.dashboard-active .nav-links a {
+    color: white !important;
+    opacity: 0.9;
+}
+
+/* 4. AUTH & CARDS */
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+/* Scoped to .login-card to avoid styling other unintended inputs */
+.login-card input {
+    width: 100%;
+    padding: 15px; 
+    padding-right: 45px; 
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    background: var(--white);
+    color: var(--text-dark);
+    font-size: 1rem;
+    box-sizing: border-box; 
+    transition: var(--transition);
+}
+
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 1.2rem;
+    z-index: 10;
+    color: var(--text-dark);
+}
+
+/* 5. BUTTONS (Premium Glossy Design) */
+.btn-login, .btn-primary, .btn-purple-send, .btn-farmer-login, .btn-buy, .btn-register-farm {
+    background: linear-gradient(135deg, #2d6a4f, #1b4332);
+    color: white;
+    padding: 15px;
+    font-weight: 600;
+    border-radius: 12px;
+    border: none;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+    margin-top: 10px;
+}
+
+/* Purple Accents */
+.btn-purple-send, .btn-farmer-login, .btn-register-farm {
+    background: linear-gradient(135deg, var(--purple-accent), var(--purple-deep));
+}
+
+.btn-login::after, .btn-primary::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -150%;
+    width: 100%;
+    height: 200%;
+    background: rgba(255,255,255,0.2);
+    transform: rotate(30deg);
+    transition: 0.8s;
+}
+
+.btn-login:hover::after, .btn-primary:hover::after {
+    left: 150%;
+}
+
+/* 6. CHAT GRAPHICS */
+.message-display {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.message.sent {
+    background: var(--purple-accent);
+    color: white;
+    align-self: flex-end;
+    border-radius: 15px 15px 0 15px;
+    padding: 12px 18px;
+    box-shadow: 0 4px 10px rgba(123, 31, 162, 0.2);
+    max-width: 80%;
+}
+
+/* 7. LAYOUT STABILITY (Prevents Redirect Flicker) */
+section {
+    display: none; /* All dashboard sections hidden by default */
+}
+
+.purple-green-text {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+/* Ensure the hero section is visible initially */
+#hero-section {
+    display: block;
+}
