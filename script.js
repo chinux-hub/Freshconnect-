@@ -1,16 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-import {
-  getFirestore, collection, addDoc, getDocs, getDoc, doc,
-  query, where, orderBy, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
-import {
-  getAuth, signInWithPopup, GoogleAuthProvider,
-  signInWithEmailAndPassword, onAuthStateChanged, signOut
-} from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
 
-/* =====================================================
-   1. FIREBASE INITIALIZATION
-===================================================== */
+// 1. FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyCDgUtehRa6LfMta2fdgk5c2Hup3jFYLWA",
   authDomain: "freshconnect-23653.firebaseapp.com",
@@ -25,202 +17,187 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
+// Global Flags
 let isLoggingInManually = false;
-let currentUserRole = "customer";
 
-/* =====================================================
-   2. AUTH STATE + ROLE GATEKEEPER
-===================================================== */
-onAuthStateChanged(auth, async (user) => {
-  const mainNav = document.getElementById("main-nav");
-  const navbar = document.getElementById("nav-header");
-  const hero = document.getElementById("hero-section");
-
-  if (user) {
-    mainNav.style.display = "flex";
-    navbar.classList.add("dashboard-active");
-
-    // 🔐 Load user role
-    const roleSnap = await getDoc(doc(db, "users", user.uid));
-    if (roleSnap.exists()) {
-      currentUserRole = roleSnap.data().role;
-      document.getElementById("current-role") &&
-        (document.getElementById("current-role").innerText = currentUserRole);
+// 2. THE GATEKEEPER
+onAuthStateChanged(auth, (user) => {
+    const mainNav = document.getElementById('main-nav');
+    const navbar = document.getElementById('nav-header');
+    const heroSection = document.getElementById('hero-section');
+    
+    if (user) {
+        // Apply Dashboard Visuals (Purple-Green)
+        if(mainNav) mainNav.style.display = "flex";
+        if(navbar) navbar.classList.add('dashboard-active'); 
+        
+        // ONLY redirect if the user clicked a login button explicitly
+        if(isLoggingInManually) {
+            window.showPage('marketplace');
+            isLoggingInManually = false;
+        }
+    } else {
+        // Revert to Standard Theme
+        if(mainNav) mainNav.style.display = "none";
+        if(navbar) navbar.classList.remove('dashboard-active');
+        
+        document.querySelectorAll('section').forEach(sec => sec.style.display = 'none');
+        if(heroSection) heroSection.style.display = 'block';
     }
-
-    if (isLoggingInManually) {
-      showPage("marketplace");
-      isLoggingInManually = false;
-    }
-  } else {
-    mainNav.style.display = "none";
-    navbar.classList.remove("dashboard-active");
-    document.querySelectorAll("section").forEach(s => s.style.display = "none");
-    hero.style.display = "block";
-  }
 });
 
-/* =====================================================
-   3. AUTH ACTIONS
-===================================================== */
-document.getElementById("main-login-form")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  isLoggingInManually = true;
-
-  try {
-    await signInWithEmailAndPassword(
-      auth,
-      login-email.value.trim(),
-      login-pass.value
-    );
-  } catch {
-    isLoggingInManually = false;
-    alert("Invalid login details");
-  }
-});
-
-document.getElementById("google-signin")?.addEventListener("click", async () => {
-  isLoggingInManually = true;
-  try {
-    await signInWithPopup(auth, provider);
-  } catch {
-    isLoggingInManually = false;
-    alert("Google sign-in failed");
-  }
-});
-
-window.logoutUser = async () => {
-  await signOut(auth);
-};
-
-/* =====================================================
-   4. NAVIGATION
-===================================================== */
-window.showPage = function (pageId) {
-  const user = auth.currentUser;
-  const protectedPages = [
-    "marketplace", "chat-window",
-    "settings-page", "farmer-dashboard"
-  ];
-
-  if (protectedPages.includes(pageId) && !user) {
-    alert("Please login first");
-    return;
-  }
-
-  document.querySelectorAll("section, main.hero")
-    .forEach(el => el.style.display = "none");
-
-  document.getElementById(pageId).style.display = "block";
-
-  if (pageId === "marketplace") loadMarketplace();
-};
-
-/* =====================================================
-   5. ROLE SWITCHING (Customer ↔ Farmer ↔ Middleman)
-===================================================== */
-window.switchUserRole = async () => {
-  const roles = ["customer", "farmer", "middleman"];
-  const nextRole = roles[(roles.indexOf(currentUserRole) + 1) % roles.length];
-  currentUserRole = nextRole;
-
-  await addDoc(collection(db, "users"), {
-    uid: auth.currentUser.uid,
-    role: nextRole
-  });
-
-  document.getElementById("current-role").innerText = nextRole;
-  alert(`Switched to ${nextRole}`);
-};
-
-/* =====================================================
-   6. FARM REGISTRATION (FARMERS ONLY)
-===================================================== */
-document.getElementById("farmForm")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  if (currentUserRole !== "farmer") return alert("Only farmers can register farms");
-
-  await addDoc(collection(db, "farms"), {
-    name: farmForm.querySelector("input[placeholder='Farm Name']").value,
-    location: farmForm.querySelector("input[placeholder='Location']").value,
-    owner: auth.currentUser.uid,
-    createdAt: serverTimestamp()
-  });
-
-  alert("Farm registered");
-  showPage("farmer-dashboard");
-});
-
-/* =====================================================
-   7. PRODUCT UPLOAD (FARMER & MIDDLEMAN)
-===================================================== */
-document.getElementById("product-form")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  if (!["farmer", "middleman"].includes(currentUserRole)) {
-    return alert("Only sellers can post products");
-  }
-
-  const name = e.target[0].value;
-  const price = e.target[1].value;
-  const file = e.target[2].files[0];
-
-  // 🧠 Auto image fallback
-  const imageUrl = file
-    ? URL.createObjectURL(file)
-    : `https://source.unsplash.com/600x400/?${encodeURIComponent(name)},farm,food`;
-
-  await addDoc(collection(db, "products"), {
-    name,
-    price,
-    image: imageUrl,
-    sellerRole: currentUserRole,
-    owner: auth.currentUser.uid,
-    createdAt: serverTimestamp()
-  });
-
-  alert("Product posted");
-  e.target.reset();
-});
-
-/* =====================================================
-   8. MARKETPLACE LOADING (PRODUCT BASED)
-===================================================== */
-async function loadMarketplace() {
-  const grids = document.querySelectorAll(".product-grid");
-  grids.forEach(g => g.innerHTML = "");
-
-  const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
-  const snap = await getDocs(q);
-
-  snap.forEach(docu => {
-    const p = docu.data();
-    const gridIndex = p.sellerRole === "farmer" ? 0 : 1;
-
-    grids[gridIndex].innerHTML += `
-      <div class="product-card morph-card">
-        <span class="badge ${p.sellerRole === "farmer" ? "farm-badge" : "middleman-badge"}">
-          ${p.sellerRole === "farmer" ? "🌾 Farm Fresh" : "🧑‍💼 Market Seller"}
-        </span>
-        <img src="${p.image}" class="${p.image.includes('unsplash') ? 'auto-image' : ''}">
-        <h4>${p.name}</h4>
-        <p>₦${p.price}</p>
-        <button class="btn-chat" onclick="showPage('chat-window')">Chat</button>
-      </div>
-    `;
-  });
+// 3. AUTHENTICATION ACTIONS
+const loginForm = document.getElementById('main-login-form');
+if(loginForm) {
+    loginForm.onsubmit = async (e) => {
+        e.preventDefault();
+        isLoggingInManually = true; 
+        const email = document.getElementById('login-email').value;
+        const pass = document.getElementById('login-pass').value;
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch (error) {
+            isLoggingInManually = false;
+            alert("Login Failed: Check your credentials.");
+        }
+    };
 }
 
-/* =====================================================
-   9. CHAT (UI READY – FIRESTORE EXTENDABLE)
-===================================================== */
-document.getElementById("send-trigger")?.addEventListener("click", () => {
-  const input = document.getElementById("user-msg");
-  const display = document.getElementById("msg-display");
-  if (!input.value.trim()) return;
+const googleBtn = document.getElementById('google-signin');
+if(googleBtn) {
+    googleBtn.onclick = async () => {
+        isLoggingInManually = true; 
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            isLoggingInManually = false;
+            alert("Google Sign-in Failed");
+        }
+    };
+}
 
-  display.innerHTML += `
-    <div class="message sent">${input.value}</div>
-  `;
-  input.value = "";
-  display.scrollTop = display.scrollHeight;
-});
+window.logoutUser = async function() {
+    try {
+        await signOut(auth);
+        isLoggingInManually = false; 
+    } catch (error) {
+        console.error("Logout Error", error);
+    }
+};
+
+// 4. NAVIGATION & UI LOGIC
+window.showPage = function(pageId) {
+    const user = auth.currentUser;
+    const privatePages = ['marketplace', 'chat-window', 'settings-page', 'farm-reg-section'];
+    
+    if (privatePages.includes(pageId) && !user) {
+        alert("Please login first!");
+        return; 
+    }
+
+    document.querySelectorAll('section, main.hero').forEach(sec => sec.style.display = 'none');
+    const target = document.getElementById(pageId);
+    if (target) {
+        target.style.display = 'block';
+        if(pageId === 'marketplace') loadFarms();
+        window.scrollTo(0,0);
+    }
+};
+
+window.toggleAuth = function() {
+    const login = document.getElementById('login-form');
+    const signup = document.getElementById('signup-form');
+    login.style.display = login.style.display === "none" ? "block" : "none";
+    signup.style.display = signup.style.display === "none" ? "block" : "none";
+};
+
+window.togglePasswordVisibility = function(inputId) {
+    const passwordInput = document.getElementById(inputId);
+    const toggleIcon = passwordInput.nextElementSibling;
+    if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggleIcon.innerText = "🔒"; 
+    } else {
+        passwordInput.type = "password";
+        toggleIcon.innerText = "👁️"; 
+    }
+};
+
+// 5. FARMER & SETTINGS LOGIC (RESTORED)
+window.switchToFarmerLogin = function() {
+    const title = document.getElementById('login-title');
+    if(title) title.innerText = "Farmer Login";
+    document.getElementById('farmer-prompt').style.opacity = "0.7";
+};
+
+window.switchUserRole = function() {
+    const roleBtn = document.getElementById('current-role');
+    if(!roleBtn) return;
+    const isCustomer = roleBtn.innerText === "Customer";
+    roleBtn.innerText = isCustomer ? "Farmer" : "Customer";
+    alert(`Switched to ${roleBtn.innerText} mode!`);
+};
+
+// Farm Registration Form Handler
+const farmForm = document.getElementById('farmForm');
+if(farmForm) {
+    farmForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const farmName = farmForm.querySelector('input[placeholder="Farm Name"]').value;
+        const location = farmForm.querySelector('input[placeholder="Location"]').value;
+        
+        try {
+            await addDoc(collection(db, "farms"), {
+                name: farmName,
+                location: location,
+                timestamp: serverTimestamp()
+            });
+            alert("Farm Registered Successfully!");
+            window.showPage('marketplace');
+        } catch (err) {
+            alert("Error: " + err.message);
+        }
+    };
+}
+
+// 6. DATA & CHAT
+async function loadFarms() {
+    const productList = document.getElementById('product-list');
+    if(!productList) return;
+    try {
+        const q = query(collection(db, "farms"), orderBy("timestamp", "desc"));
+        const querySnapshot = await getDocs(q);
+        productList.innerHTML = "";
+        querySnapshot.forEach((doc) => {
+            const farm = doc.data();
+            productList.innerHTML += `
+                <div class="product-card premium-card">
+                    <div class="badge">🚜 Verified</div>
+                    <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=300" alt="Farm">
+                    <div class="product-info">
+                        <h4>${farm.name}</h4>
+                        <p>📍 ${farm.location}</p>
+                        <div class="price-row">
+                            <span class="price-tag purple-green-text">Active</span>
+                            <button class="btn-msg" onclick="showPage('chat-window')">💬 Message</button>
+                        </div>
+                    </div>
+                </div>`;
+        });
+    } catch (e) { console.error(e); }
+}
+
+const sendBtn = document.getElementById('send-trigger');
+if(sendBtn) {
+    sendBtn.onclick = () => {
+        const chatInput = document.getElementById('user-msg');
+        const msgDisplay = document.getElementById('msg-display');
+        if(chatInput.value.trim() === "") return;
+        const msg = document.createElement('div');
+        msg.className = 'message sent purple-bubble'; 
+        msg.innerHTML = `<span>${chatInput.value}</span>`;
+        msgDisplay.appendChild(msg);
+        chatInput.value = "";
+        msgDisplay.scrollTop = msgDisplay.scrollHeight;
+    };
+}
