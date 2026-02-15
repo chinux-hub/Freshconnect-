@@ -35,12 +35,12 @@ window.setAuthMode = (mode) => {
     currentMode = mode;
     const roleInfo = document.getElementById('role-info');
     const authBtn = document.getElementById('main-auth-btn');
-
+    
     document.querySelectorAll('.auth-tabs button').forEach(b => b.classList.remove('active'));
     document.getElementById(`tab-${mode}`)?.classList.add('active');
-
+    
     if(roleInfo) roleInfo.style.display = (mode === 'login' || mode === 'cust') ? 'none' : 'block';
-
+    
     const labels = { 
         'login': 'Enter Ecosystem', 'cust': 'Join as Buyer', 
         'farm': 'Register Farm', 'marketer': 'Join as Marketer', 'trans': 'Join Delivery Fleet' 
@@ -56,7 +56,7 @@ window.handleAuth = async () => {
     const pass = document.getElementById('login-pass').value;
     const bizName = document.getElementById('biz-name')?.value.trim() || "";
     const bizLoc = document.getElementById('biz-loc')?.value.trim() || "";
-
+    
     if (!email || !pass) return alert("Please enter credentials.");
 
     try {
@@ -109,7 +109,7 @@ window.showPage = (id) => {
         if (role === 'farm') targetId = 'farmer-portal';
         else if (role === 'marketer') targetId = 'marketer-portal';
         else if (role === 'trans') targetId = 'logistics-page';
-
+        
         if(backBtn) backBtn.style.display = 'none';
         navHistory = []; 
     } else {
@@ -187,7 +187,7 @@ function renderEcosystem(filter = "") {
     const list = document.getElementById('nearby-prism-list');
     if(!list) return;
     list.innerHTML = "";
-
+    
     const filtered = ecosystemCache.filter(user => {
         if (user.uid === auth.currentUser?.uid) return false;
         const searchPool = `${user.businessName} ${user.location} ${user.role}`.toLowerCase();
@@ -345,9 +345,9 @@ onAuthStateChanged(auth, async (user) => {
             cachedUserRole = data.role;
             localStorage.setItem('userRole', data.role);
             localStorage.setItem('bizName', data.businessName || "");
-
+            
             if(guestHeader) guestHeader.style.display = 'none';
-
+            
             if(authBtn) {
                 authBtn.innerText = `Continue as ${data.businessName || user.email.split('@')[0]}`;
                 authBtn.onclick = () => window.revealDashboard();
